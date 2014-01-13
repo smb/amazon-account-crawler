@@ -16,7 +16,7 @@ def get_order_links(agent, page, order_links)
 		order_links.push(link)
 	}
 
-	next_link = page.link_with(:text => $nexttext)		
+	next_link = page.link_with(:text => $nexttext)
 
 	if(next_link != nil) then
 		get_order_links(agent, agent.click(next_link), order_links)
@@ -27,14 +27,16 @@ total_sum = 0.0
 
 email = ask('E-Mail:')
 password = ask('Password:') { |q|
-	q.echo = '*'	
+	q.echo = '*'
 }
+
 
 # Dear amazon.com redesign,
 # FUCK YOU!
 # Sincerely, Pascal
 puts "1) Germany 2) UK"
 country = ask('Country: ', Integer) { |q| q.in = 1..2 }
+
 case country
 	when 2
 		$tld = 'co.uk'
@@ -52,7 +54,7 @@ case country
 		$accounttext = 'Mein Konto'
 		$orderstext = 'Meine Bestellungen'
 		$currency = 'EUR '
-		$overviewtext = 'Übersicht anzeigen'
+		$overviewtext = 'Bestellübersicht drucken'
 		$pricedelimiter = ','
 		$thousandseperator = '.'
 		$nexttext = 'Weiter »'
@@ -67,7 +69,7 @@ a.agent.http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 puts 'Now scanning https://amazon.' + $tld + '/'
 
 a.get('https://amazon.' + $tld + '/') do |page|
-	start_page = page.link_with(:text => $logintext)
+	start_page = page.link_with(:id => 'nav-your-account')
 
 	if (start_page != nil )
 		login_page = a.click(start_page)
@@ -75,7 +77,7 @@ a.get('https://amazon.' + $tld + '/') do |page|
 			f.email = email
 			f.password = password
 		end.click_button
-		
+
 		account_page = a.click(logged_in_page.link_with(:text => $accounttext))
 	else
 		account_page = a.click(page.link_with(:text => $accounttext))
@@ -102,10 +104,8 @@ a.get('https://amazon.' + $tld + '/') do |page|
 
 		year_page = select_form.submit
 
-		
 		count = year_page.search(".//div[@class='num-results']/b[1]")
 		year = year_page.search(".//div[@class='num-results']/b[2]")
-
 
 		puts "Year " + year.text + ", " + count.text + " orders"
 		print "\t"
@@ -130,7 +130,7 @@ a.get('https://amazon.' + $tld + '/') do |page|
 					next
 				end
 			end
-			
+
 			# multi-line result, select currency until end-of-string
 			money_str = money_str[money_str.index($currency)..-1]
 
@@ -142,9 +142,9 @@ a.get('https://amazon.' + $tld + '/') do |page|
 			end
 
 			money_str[$pricedelimiter]= '.'
-			
+
 			eurs = money_str.to_f
-			
+
 			total_sum = total_sum + eurs
 			year_sum = year_sum + eurs
 
@@ -152,10 +152,9 @@ a.get('https://amazon.' + $tld + '/') do |page|
 			print " "
 			STDOUT.flush
 		end
-		
+
 		puts "Done. Year total: " + year_sum.to_s
 	end
-	
 end
 
 
